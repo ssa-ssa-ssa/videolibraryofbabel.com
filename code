@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video Library of Babel</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      background-color: #000000;
+      color: #ffffff;
+      font-family: monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      margin: 0;
+      padding: 24px 16px;
+    }
+    h1 { 
+      margin-top: 0;
+      margin-bottom: 6px; 
+      color: #ffffff; 
+      font-size: 24px; 
+      letter-spacing: 1.5px; 
+      text-transform: uppercase;
+      text-align: center;
+    }
+    p.specs { 
+      margin-top: 0; 
+      color: #777777; 
+      font-size: 11px; 
+      text-align: center; 
+      max-width: 580px; 
+      line-height: 1.4;
+      letter-spacing: 0.5px;
+    }
+
+    /* Disclaimer Box */
+    .disclaimer-box {
+      background: #0d0d0d;
+      border: 1px solid #333333;
+      border-left: 3px solid #ffffff;
+      padding: 10px 14px;
+      border-radius: 2px;
+      width: 100%;
+      max-width: 512px;
+      margin-bottom: 16px;
+      font-size: 11px;
+      color: #aaaaaa;
+      line-height: 1.4;
+    }
+    .disclaimer-title {
+      color: #ffffff;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    canvas {
+      width: 512px; /* 256x144 resolution scaled 2x */
+      height: 288px;
+      border: 1px solid #ffffff;
+      background: #000000;
+      image-rendering: pixelated;
+      max-width: 100%;
+    }
+
+    .info {
+      margin-top: 10px;
+      font-size: 11px;
+      color: #aaaaaa;
+      text-align: center;
+      word-break: break-all;
+      min-height: 18px;
+      max-width: 512px;
+    }
+
+    .upload-box {
+      background: #0a0a0a;
+      border: 1px dashed #444444;
+      padding: 16px;
+      border-radius: 2px;
+      width: 100%;
+      max-width: 512px;
+      text-align: center;
+      margin-top: 12px;
+      margin-bottom: 12px;
+    }
+    .upload-box:hover {
+      border-color: #888888;
+    }
+    .upload-box input[type="file"] {
+      display: none;
+    }
+    .custom-upload {
+      background: #ffffff;
+      color: #000000;
+      padding: 8px 18px;
+      font-weight: bold;
+      border-radius: 2px;
+      cursor: pointer;
+      display: inline-block;
+      font-size: 12px;
+      letter-spacing: 0.5px;
+      transition: background 0.15s ease;
+    }
+    .custom-upload:hover { 
+      background: #cccccc; 
+    }
+
+    .search-box {
+      display: flex;
+      gap: 8px;
+      width: 100%;
+      max-width: 512px;
+      margin-bottom: 12px;
+    }
+    input[type="text"] {
+      flex: 1;
+      background: #0a0a0a;
+      border: 1px solid #333333;
+      color: #ffffff;
+      padding: 10px 12px;
+      font-family: inherit;
+      font-size: 12px;
+      border-radius: 2px;
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+    input[type="text"]:focus {
+      border-color: #ffffff;
+    }
+    button.search-btn {
+      background: #ffffff;
+      color: #000000;
+      font-weight: bold;
+      border: none;
+      padding: 0 16px;
+      cursor: pointer;
+      border-radius: 2px;
+      font-size: 12px;
+      letter-spacing: 0.5px;
+      transition: background 0.15s ease;
+    }
+    button.search-btn:hover { 
+      background: #cccccc; 
+    }
+
+    .word-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      max-width: 512px;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+    .tag {
+      background: #0a0a0a;
+      border: 1px solid #222222;
+      color: #888888;
+      padding: 4px 10px;
+      font-size: 11px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .tag:hover {
+      border-color: #ffffff;
+      color: #ffffff;
+      background: #111111;
+    }
+
+    #hiddenVideo { 
+      display: none; 
+    }
+
+    @media (max-width: 540px) {
+      canvas {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 16 / 9;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Video Library of Babel</h1>
+  <p class="specs">Specs: 256x144 Resolution | 2s Fragment (30 Frames) @ 15 FPS | 8-Bit Quantized Audio & Visuals</p>
+
+  <div class="disclaimer-box">
+    <div class="disclaimer-title">&#9888; NOTICE / DISCLAIMER</div>
+    Notice: Every video file uploaded to this site is stored temporarily in browser memory and will be permanently deleted after reloading or exiting the site.
+  </div>
+
+  <canvas id="videoCanvas" width="256" height="144"></canvas>
+  <div class="info" id="status">Status: Upload an MP4 video or search a Babel address</div>
+
+  <!-- Upload MP4 Section -->
+  <div class="upload-box">
+    <label for="mp4Input" class="custom-upload">Upload MP4 Fragment</label>
+    <input type="file" id="mp4Input" accept="video/mp4,video/*">
+    <div id="fileInfo" style="font-size: 11px; color: #666666; margin-top: 8px;">Upload a video to assign a temporary 32-character Babel session ID.</div>
+  </div>
+
+  <!-- Search Engine Bar -->
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="Search Babel Address / Prompt...">
+    <button class="search-btn" id="searchBtn">Search</button>
+  </div>
+
+  <!-- Quick Tags -->
+  <div class="word-tags">
+    <span class="tag" onclick="quickSearch('cat')">#cat</span>
+    <span class="tag" onclick="quickSearch('dog')">#dog</span>
+    <span class="tag" onclick="quickSearch('deleted')">#deleted</span>
+    <span class="tag" onclick="quickSearch('sun')">#sun</span>
+    <span class="tag" onclick="quickSearch('moon')">#moon</span>
+  </div>
+
+  <!-- Hidden video tag for frame extraction -->
+  <video id="hiddenVideo" muted playsinline></video>
+
+  <script>
+    const WIDTH = 256;
+    const HEIGHT = 144;
+    const TOTAL_PIXELS = WIDTH * HEIGHT; 
+    const FPS = 15;
+    const DURATION_SEC = 2;
+    const TOTAL_FRAMES = FPS * DURATION_SEC; // 30 Frames
+    const SAMPLE_RATE = 22050; // Lower sampling rate for retro 8-bit sound character
+
+    const canvas = document.getElementById('videoCanvas');
+    const ctx = canvas.getContext('2d');
+    const status = document.getElementById('status');
+    const searchInput = document.getElementById('searchInput');
+    const mp4Input = document.getElementById('mp4Input');
+    const hiddenVideo = document.getElementById('hiddenVideo');
+    const fileInfo = document.getElementById('fileInfo');
+
+    let audioCtx = null;
+    let activeInterval = null;
+    let activeAudioSource = null;
+
+    // Session Map storing uploaded videos (frames & extracted 8-bit original audio track)
+    const uploadedMap = new Map();
+
+    function LCG(seed) {
+      let state = BigInt(seed);
+      return function() {
+        state = (state * 6364136223846793005n + 1442695040888963407n) % (2n ** 64n);
+        return Number(state >> 32n) / 4294967296;
+      };
+    }
+
+    function hashQuery(str) {
+      let hash = 0n;
+      const cleanStr = str.toLowerCase().trim();
+      if (cleanStr.length === 0) return 987654321n;
+      for (let i = 0; i < cleanStr.length; i++) {
+        const char = BigInt(cleanStr.charCodeAt(i));
+        hash = (hash << 5n) - hash + char;
+      }
+      return hash < 0n ? -hash : hash;
+    }
+
+    function generateRandomBabelHex() {
+      const chars = '0123456789abcdef';
+      let hex = '0x';
+      for (let i = 0; i < 32; i++) {
+        hex += chars[Math.floor(Math.random() * chars.length)];
+      }
+      return hex;
+    }
+
+    // Quantize video frames to 8-bit retro color palette (4 levels/channel = 64 color palette)
+    function apply8BitColorQuantization(imageData) {
+      const d = imageData.data;
+      for (let i = 0; i < d.length; i += 4) {
+        d[i]     = Math.floor(d[i] / 64) * 64;     // Red: 4 levels (0, 64, 128, 192)
+        d[i + 1] = Math.floor(d[i + 1] / 64) * 64; // Green: 4 levels
+        d[i + 2] = Math.floor(d[i + 2] / 64) * 64; // Blue: 4 levels
+      }
+      return imageData;
+    }
+
+    function initAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: SAMPLE_RATE });
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function stopCurrentAudio() {
+      if (activeAudioSource) {
+        try {
+          activeAudioSource.stop();
+          activeAudioSource.disconnect();
+        } catch (e) {}
+        activeAudioSource = null;
+      }
+    }
+
+    // Decodes the original video's audio track and downsamples it to true 8-bit depth (256 discrete amplitude steps)
+    async function processAndQuantizeOriginalAudio(file) {
+      initAudioContext();
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const decodedBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+
+        const targetSamples = Math.floor(SAMPLE_RATE * DURATION_SEC);
+        const quantizedAudioBuffer = audioCtx.createBuffer(1, targetSamples, SAMPLE_RATE);
+        const outputData = quantizedAudioBuffer.getChannelData(0);
+
+        const numChannels = decodedBuffer.numberOfChannels;
+        const sourceLength = decodedBuffer.length;
+        const sourceRate = decodedBuffer.sampleRate;
+
+        for (let i = 0; i < targetSamples; i++) {
+          const sourceIdx = Math.floor((i / SAMPLE_RATE) * sourceRate);
+          if (sourceIdx < sourceLength) {
+            let sampleVal = 0;
+            for (let ch = 0; ch < numChannels; ch++) {
+              sampleVal += decodedBuffer.getChannelData(ch)[sourceIdx];
+            }
+            sampleVal /= numChannels; // Mono mixdown
+
+            // Quantize continuous float sample [-1.0, 1.0] to true 8-bit resolution (256 distinct amplitude levels)
+            const discrete8BitVal = Math.round(sampleVal * 127);
+            outputData[i] = Math.max(-128, Math.min(127, discrete8BitVal)) / 128.0;
+          } else {
+            outputData[i] = 0;
+          }
+        }
+        return quantizedAudioBuffer;
+      } catch (e) {
+        console.warn("No audio track detected or error decoding audio from video file:", e);
+        return null;
+      }
+    }
+
+    mp4Input.addEventListener('change', async function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      fileInfo.innerText = `Processing: ${file.name}...`;
+      status.innerText = "Processing video frames & extracting original 8-bit audio track...";
+
+      // Extract original soundtrack and convert to 8-bit quantized PCM audio buffer
+      const originalAudio8Bit = await processAndQuantizeOriginalAudio(file);
+
+      const fileURL = URL.createObjectURL(file);
+      hiddenVideo.src = fileURL;
+
+      await hiddenVideo.load();
+      
+      hiddenVideo.onloadedmetadata = async () => {
+        const frames = [];
+        const frameDuration = 1 / FPS;
+
+        for (let i = 0; i < TOTAL_FRAMES; i++) {
+          hiddenVideo.currentTime = i * frameDuration;
+          await new Promise(resolve => hiddenVideo.onseeked = resolve);
+
+          ctx.drawImage(hiddenVideo, 0, 0, WIDTH, HEIGHT);
+          const frameData = ctx.getImageData(0, 0, WIDTH, HEIGHT);
+          
+          // Quantize frame colors to 8-bit retro palette
+          const quantizedFrame = apply8BitColorQuantization(frameData);
+          frames.push(quantizedFrame);
+        }
+
+        const randomID = generateRandomBabelHex();
+        uploadedMap.set(randomID, {
+          frames: frames,
+          audioBuffer: originalAudio8Bit
+        });
+
+        fileInfo.innerText = `Assigned Session Babel ID: ${randomID}`;
+        searchInput.value = randomID;
+
+        playUploadedFragment(randomID);
+      };
+    });
+
+    function playUploadedFragment(id) {
+      if (activeInterval) clearInterval(activeInterval);
+      stopCurrentAudio();
+
+      const item = uploadedMap.get(id);
+      if (!item) {
+        status.innerText = "Babel Session Address not found or expired.";
+        return;
+      }
+
+      const frames = item.frames;
+      const audioBuffer = item.audioBuffer;
+
+      initAudioContext();
+
+      // Play original video audio track downsampled to 8-bit in sync with canvas
+      if (audioBuffer) {
+        activeAudioSource = audioCtx.createBufferSource();
+        activeAudioSource.buffer = audioBuffer;
+        activeAudioSource.connect(audioCtx.destination);
+        activeAudioSource.start();
+      }
+
+      let currentFrame = 0;
+      status.innerText = `Playing 8-Bit Session Video ID: ${id}`;
+
+      activeInterval = setInterval(() => {
+        if (currentFrame >= frames.length) {
+          clearInterval(activeInterval);
+          stopCurrentAudio();
+          status.innerText = `Finished playing Session ID: ${id}`;
+          return;
+        }
+
+        ctx.putImageData(frames[currentFrame], 0, 0);
+        status.innerText = `Playing Session ID: ${id} [Frame ${currentFrame + 1}/${TOTAL_FRAMES}]`;
+        currentFrame++;
+      }, 1000 / FPS);
+    }
+
+    function quickSearch(word) {
+      searchInput.value = word;
+      generateAndPlay();
+    }
+
+    async function generateAndPlay() {
+      const query = searchInput.value.trim();
+
+      if (uploadedMap.has(query)) {
+        playUploadedFragment(query);
+        return;
+      }
+
+      if (activeInterval) clearInterval(activeInterval);
+      stopCurrentAudio();
+
+      const seed = hashQuery(query || "cat");
+      const prng = LCG(seed);
+
+      status.innerText = `Searching Babel Index for: "${query || "cat"}"...`;
+
+      initAudioContext();
+
+      // Synth retro 8-bit noise audio for algorithmic text query searches
+      const targetSamples = Math.floor(SAMPLE_RATE * DURATION_SEC);
+      const synthBuffer = audioCtx.createBuffer(1, targetSamples, SAMPLE_RATE);
+      const channelData = synthBuffer.getChannelData(0);
+
+      for (let i = 0; i < targetSamples; i++) {
+        const rawSample = (prng() * 2) - 1; 
+        const int8Val = Math.floor(rawSample * 127);
+        channelData[i] = (int8Val / 128.0) * 0.12; 
+      }
+
+      activeAudioSource = audioCtx.createBufferSource();
+      activeAudioSource.buffer = synthBuffer;
+      activeAudioSource.connect(audioCtx.destination);
+      activeAudioSource.start();
+
+      // Render 8-Bit PRNG Color Video Stream
+      const imgData = ctx.createImageData(WIDTH, HEIGHT);
+      const data = imgData.data;
+
+      let currentFrame = 0;
+      activeInterval = setInterval(() => {
+        if (currentFrame >= TOTAL_FRAMES) {
+          clearInterval(activeInterval);
+          stopCurrentAudio();
+          status.innerText = `Finished playing Babel Query: "${query || "cat"}"`;
+          return;
+        }
+
+        for (let i = 0; i < TOTAL_PIXELS; i++) {
+          const p = i * 4;
+          data[p]     = Math.floor(prng() * 4) * 64; // Red
+          data[p + 1] = Math.floor(prng() * 4) * 64; // Green
+          data[p + 2] = Math.floor(prng() * 4) * 64; // Blue
+          data[p + 3] = 255;                         // Alpha
+        }
+
+        ctx.putImageData(imgData, 0, 0);
+        status.innerText = `Query: "${query || "cat"}" [Frame ${currentFrame + 1}/${TOTAL_FRAMES}]`;
+        currentFrame++;
+      }, 1000 / FPS);
+    }
+
+    document.getElementById('searchBtn').addEventListener('click', generateAndPlay);
+    searchInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') generateAndPlay();
+    });
+  </script>
+</body>
+</html>
